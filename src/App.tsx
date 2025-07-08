@@ -64,9 +64,11 @@ function App() {
     recognition.onend = () => {
       console.log('Recognition ended. hasUserInitiated:', hasUserInitiatedRef.current, 'isRestarting:', isRestartingRef.current);
       setIsListening(false);
+      setIsRestarting(false);
+      isRestartingRef.current = false;
       
       // If user initiated recording and we should be listening, restart
-      if (hasUserInitiatedRef.current && !isRestartingRef.current) {
+      if (hasUserInitiatedRef.current) {
         console.log('Attempting to restart recording...');
         setIsRestarting(true);
         isRestartingRef.current = true;
