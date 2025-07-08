@@ -53,15 +53,19 @@ function App() {
     recognition.lang = 'en-US';
     
     recognition.onstart = () => {
+      console.log('Recognition started');
       setIsListening(true);
+      setIsRestarting(false);
       setError(null);
     };
     
     recognition.onend = () => {
+      console.log('Recognition ended. hasUserInitiated:', hasUserInitiatedRecording, 'isRestarting:', isRestarting);
       setIsListening(false);
       
       // If user initiated recording and we should be listening, restart
       if (hasUserInitiatedRecording && !isRestarting) {
+        console.log('Attempting to restart recording...');
         setIsRestarting(true);
         
         // Clear any existing restart timeout
@@ -71,10 +75,14 @@ function App() {
         
         // Attempt restart after brief delay
         restartTimeoutRef.current = setTimeout(() => {
+          console.log('Executing restart...');
           try {
-            recognition.start();
+            if (recognitionRef.current) {
+              recognitionRef.current.start();
+            }
             setIsRestarting(false);
           } catch (error) {
+            console.error('Restart failed:', error);
             setIsRestarting(false);
             setError('Failed to restart recording');
           }
@@ -83,6 +91,7 @@ function App() {
     };
     
     recognition.onerror = (event: any) => {
+      console.log('Recognition error:', event.error);
       if (event.error === 'no-speech') {
         // Let onend handle the restart for no-speech errors
         return;
@@ -90,6 +99,10 @@ function App() {
         // User manually stopped, don't restart
         setIsRestarting(false);
         return;
+      } else if (event.error === 'not-allowed') {
+        setError('Microphone access denied');
+        setHasUserInitiatedRecording(false);
+        setIsRestarting(false);
       } else {
         setError(`Speech recognition error: ${event.error}`);
         setIsRestarting(false);
@@ -97,6 +110,7 @@ function App() {
     };
     
     recognition.onresult = (event: any) => {
+      console.log('Recognition result received');
       let interimTranscript = '';
       let finalTranscript = '';
       
@@ -130,12 +144,15 @@ function App() {
     return () => {
       if (recognitionRef.current) {
         recognitionRef.current.stop();
+      } catch (error) {
+        console.error('Error stopping recognition:', error);
+      }
       }
       if (restartTimeoutRef.current) {
         clearTimeout(restartTimeoutRef.current);
       }
     };
-  }, [hasUserInitiatedRecording, isRestarting]);
+  }, []);
 
   useEffect(() => {
     // Auto-scroll to bottom when new captions are added
@@ -154,6 +171,7 @@ function App() {
 
   const startListening = () => {
     if (recognitionRef.current && !isListening) {
+      console.log('User starting recording');
       setHasUserInitiatedRecording(true);
       setIsRestarting(false);
       setError(null);
@@ -166,6 +184,7 @@ function App() {
   };
 
   const stopListening = () => {
+    console.log('User stopping recording');
     if (recognitionRef.current && isListening) {
       setHasUserInitiatedRecording(false);
       setIsRestarting(false);
@@ -173,6 +192,7 @@ function App() {
         clearTimeout(restartTimeoutRef.current);
         restartTimeoutRef.current = null;
       }
+      try {
       recognitionRef.current.stop();
     }
   };
