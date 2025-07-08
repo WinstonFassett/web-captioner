@@ -143,10 +143,11 @@ function App() {
     
     return () => {
       if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      } catch (error) {
-        console.error('Error stopping recognition:', error);
-      }
+        try {
+          recognitionRef.current.stop();
+        } catch (error) {
+          console.error('Error stopping recognition:', error);
+        }
       }
       if (restartTimeoutRef.current) {
         clearTimeout(restartTimeoutRef.current);
@@ -193,7 +194,10 @@ function App() {
         restartTimeoutRef.current = null;
       }
       try {
-      recognitionRef.current.stop();
+        recognitionRef.current.stop();
+      } catch (error) {
+        console.error('Error stopping recognition:', error);
+      }
     }
   };
 
