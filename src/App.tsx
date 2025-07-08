@@ -36,6 +36,8 @@ function App() {
   const captionEndRef = useRef<HTMLDivElement>(null);
   const editInputRef = useRef<HTMLTextAreaElement>(null);
   const restartTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hasUserInitiatedRef = useRef(false);
+  const isRestartingRef = useRef(false);
 
   useEffect(() => {
     // Check browser support
@@ -60,13 +62,14 @@ function App() {
     };
     
     recognition.onend = () => {
-      console.log('Recognition ended. hasUserInitiated:', hasUserInitiatedRecording, 'isRestarting:', isRestarting);
+      console.log('Recognition ended. hasUserInitiated:', hasUserInitiatedRef.current, 'isRestarting:', isRestartingRef.current);
       setIsListening(false);
       
       // If user initiated recording and we should be listening, restart
-      if (hasUserInitiatedRecording && !isRestarting) {
+      if (hasUserInitiatedRef.current && !isRestartingRef.current) {
         console.log('Attempting to restart recording...');
         setIsRestarting(true);
+        isRestartingRef.current = true;
         
         // Clear any existing restart timeout
         if (restartTimeoutRef.current) {
@@ -80,10 +83,10 @@ function App() {
             if (recognitionRef.current) {
               recognitionRef.current.start();
             }
-            setIsRestarting(false);
           } catch (error) {
             console.error('Restart failed:', error);
             setIsRestarting(false);
+            isRestartingRef.current = false;
             setError('Failed to restart recording');
           }
         }, 500);
@@ -98,14 +101,18 @@ function App() {
       } else if (event.error === 'aborted') {
         // User manually stopped, don't restart
         setIsRestarting(false);
+        isRestartingRef.current = false;
         return;
       } else if (event.error === 'not-allowed') {
         setError('Microphone access denied');
         setHasUserInitiatedRecording(false);
+        hasUserInitiatedRef.current = false;
         setIsRestarting(false);
+        isRestartingRef.current = false;
       } else {
         setError(`Speech recognition error: ${event.error}`);
         setIsRestarting(false);
+        isRestartingRef.current = false;
       }
     };
     
@@ -174,7 +181,10 @@ function App() {
     if (recognitionRef.current && !isListening) {
       console.log('User starting recording');
       setHasUserInitiatedRecording(true);
+      hasUserInitiatedRef.current = true;
       setIsRestarting(false);
+      isRestartingRef.current = false;
+      isRestartingRef.current = false;
       setError(null);
       try {
         recognitionRef.current.start();
@@ -188,7 +198,9 @@ function App() {
     console.log('User stopping recording');
     if (recognitionRef.current && isListening) {
       setHasUserInitiatedRecording(false);
+      hasUserInitiatedRef.current = false;
       setIsRestarting(false);
+      isRestartingRef.current = false;
       if (restartTimeoutRef.current) {
         clearTimeout(restartTimeoutRef.current);
         restartTimeoutRef.current = null;
