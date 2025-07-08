@@ -29,10 +29,21 @@ function App() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
+  const [hasUserInitiatedRecording, setHasUserInitiatedRecording] = useState(false);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const captionEndRef = useRef<HTMLDivElement>(null);
   const editInputRef = useRef<HTMLTextAreaElement>(null);
+
+  const speakMessage = (message: string) => {
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(message);
+      utterance.volume = 0.7;
+      utterance.rate = 1;
+      utterance.pitch = 1;
+      window.speechSynthesis.speak(utterance);
+    }
+  };
 
   useEffect(() => {
     // Check browser support
@@ -55,12 +66,38 @@ function App() {
     };
     
     recognition.onend = () => {
-      setIsListening(false);
+      // If we were listening and it ended unexpectedly, restart
+      if (isListening) {
+        try {
+          recognition.start();
+        } catch (error) {
+          setIsListening(false);
+        }
+      } else {
+        setIsListening(false);
+      }
     };
     
     recognition.onerror = (event: any) => {
-      setError(`Speech recognition error: ${event.error}`);
-      setIsListening(false);
+      if (event.error === 'no-speech') {
+        speakMessage('Recording stopped due to no speech. Restarting.');
+        setError('No speech detected, restarting...');
+        setTimeout(() => setError(null), 3000);
+        
+        // Restart recognition after a brief delay
+        setTimeout(() => {
+          if (isListening) {
+            try {
+              recognition.start();
+            } catch (error) {
+              setIsListening(false);
+            }
+          }
+        }, 1000);
+      } else {
+        setError(`Speech recognition error: ${event.error}`);
+        setIsListening(false);
+      }
     };
     
     recognition.onresult = (event: any) => {
@@ -118,6 +155,8 @@ function App() {
 
   const startListening = () => {
     if (recognitionRef.current && !isListening) {
+      setHasUserInitiatedRecording(true);
+      setError(null);
       try {
         recognitionRef.current.start();
       } catch (error) {
@@ -303,7 +342,12 @@ function App() {
           {captions.length === 0 && !currentCaption && (
             <div className="text-center py-12 text-white/40">
               <Mic className="w-20 h-20 mx-auto mb-6" />
-              <p className="text-2xl font-light">Start speaking to see live captions</p>
+              <p className="text-2xl font-light">
+                {!hasUserInitiatedRecording 
+                  ? 'Press record to start captioning' 
+                  : 'Start speaking to see live captions'
+                }
+              </p>
             </div>
           )}
           
@@ -430,7 +474,12 @@ function App() {
           
           <div className="text-center">
             <p className="text-white/60 text-lg font-medium">
-              {isListening ? 'Recording...' : 'Click to start'}
+              {!hasUserInitiatedRecording 
+                ? 'Press record to start captioning'
+                : isListening 
+                  ? 'Recording...' 
+                  : 'Click to start'
+              }
             </p>
             {isListening && (
               <div className="flex items-center justify-center space-x-1 mt-3 h-8">
