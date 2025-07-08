@@ -30,20 +30,12 @@ function App() {
   const [editText, setEditText] = useState('');
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
   const [hasUserInitiatedRecording, setHasUserInitiatedRecording] = useState(false);
+  const [isRestarting, setIsRestarting] = useState(false);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const captionEndRef = useRef<HTMLDivElement>(null);
   const editInputRef = useRef<HTMLTextAreaElement>(null);
-
-  const speakMessage = (message: string) => {
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(message);
-      utterance.volume = 0.7;
-      utterance.rate = 1;
-      utterance.pitch = 1;
-      window.speechSynthesis.speak(utterance);
-    }
-  };
+  const restartTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Check browser support
@@ -66,37 +58,41 @@ function App() {
     };
     
     recognition.onend = () => {
-      // If we were listening and it ended unexpectedly, restart
-      if (isListening) {
-        try {
-          recognition.start();
-        } catch (error) {
-          setIsListening(false);
+      setIsListening(false);
+      
+      // If user initiated recording and we should be listening, restart
+      if (hasUserInitiatedRecording && !isRestarting) {
+        setIsRestarting(true);
+        
+        // Clear any existing restart timeout
+        if (restartTimeoutRef.current) {
+          clearTimeout(restartTimeoutRef.current);
         }
-      } else {
-        setIsListening(false);
+        
+        // Attempt restart after brief delay
+        restartTimeoutRef.current = setTimeout(() => {
+          try {
+            recognition.start();
+            setIsRestarting(false);
+          } catch (error) {
+            setIsRestarting(false);
+            setError('Failed to restart recording');
+          }
+        }, 500);
       }
     };
     
     recognition.onerror = (event: any) => {
       if (event.error === 'no-speech') {
-        speakMessage('Recording stopped due to no speech. Restarting.');
-        setError('No speech detected, restarting...');
-        setTimeout(() => setError(null), 3000);
-        
-        // Restart recognition after a brief delay
-        setTimeout(() => {
-          if (isListening) {
-            try {
-              recognition.start();
-            } catch (error) {
-              setIsListening(false);
-            }
-          }
-        }, 1000);
+        // Let onend handle the restart for no-speech errors
+        return;
+      } else if (event.error === 'aborted') {
+        // User manually stopped, don't restart
+        setIsRestarting(false);
+        return;
       } else {
         setError(`Speech recognition error: ${event.error}`);
-        setIsListening(false);
+        setIsRestarting(false);
       }
     };
     
@@ -135,8 +131,11 @@ function App() {
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
+      if (restartTimeoutRef.current) {
+        clearTimeout(restartTimeoutRef.current);
+      }
     };
-  }, []);
+  }, [hasUserInitiatedRecording, isRestarting]);
 
   useEffect(() => {
     // Auto-scroll to bottom when new captions are added
@@ -156,6 +155,7 @@ function App() {
   const startListening = () => {
     if (recognitionRef.current && !isListening) {
       setHasUserInitiatedRecording(true);
+      setIsRestarting(false);
       setError(null);
       try {
         recognitionRef.current.start();
@@ -167,6 +167,12 @@ function App() {
 
   const stopListening = () => {
     if (recognitionRef.current && isListening) {
+      setHasUserInitiatedRecording(false);
+      setIsRestarting(false);
+      if (restartTimeoutRef.current) {
+        clearTimeout(restartTimeoutRef.current);
+        restartTimeoutRef.current = null;
+      }
       recognitionRef.current.stop();
     }
   };
@@ -458,14 +464,14 @@ function App() {
         {/* Recording controls - fixed at bottom */}
         <div className="flex-shrink-0 flex items-center justify-center space-x-6 pb-4">
           <button
-            onClick={isListening ? stopListening : startListening}
+            onClick={(isListening || isRestarting) ? stopListening : startListening}
             className={`relative p-6 rounded-full transition-all duration-300 transform hover:scale-105 ${
-              isListening
+              (isListening || isRestarting)
                 ? 'bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/50'
                 : 'bg-blue-500 hover:bg-blue-600 shadow-lg shadow-blue-500/50'
             }`}
           >
-            {isListening ? (
+            {(isListening || isRestarting) ? (
               <MicOff className="w-8 h-8 text-white" />
             ) : (
               <Mic className="w-8 h-8 text-white" />
@@ -476,18 +482,20 @@ function App() {
             <p className="text-white/60 text-lg font-medium">
               {!hasUserInitiatedRecording 
                 ? 'Press record to start captioning'
-                : isListening 
-                  ? 'Recording...' 
-                  : 'Click to start'
+                : isRestarting
+                  ? 'Restarting recording...'
+                  : isListening 
+                    ? 'Recording...' 
+                    : 'Click to start'
               }
             </p>
-            {isListening && (
+            {(isListening || isRestarting) && (
               <div className="flex items-center justify-center space-x-1 mt-3 h-8">
-                <div className="w-1.5 h-6 bg-red-400 rounded-full opacity-60"></div>
-                <div className="w-1.5 h-8 bg-red-400 rounded-full opacity-80"></div>
-                <div className="w-1.5 h-4 bg-red-400 rounded-full opacity-60"></div>
-                <div className="w-1.5 h-7 bg-red-400 rounded-full opacity-70"></div>
-                <div className="w-1.5 h-5 bg-red-400 rounded-full opacity-60"></div>
+                <div className={`w-1.5 h-6 rounded-full opacity-60 ${isRestarting ? 'bg-yellow-400' : 'bg-red-400'}`}></div>
+                <div className={`w-1.5 h-8 rounded-full opacity-80 ${isRestarting ? 'bg-yellow-400' : 'bg-red-400'}`}></div>
+                <div className={`w-1.5 h-4 rounded-full opacity-60 ${isRestarting ? 'bg-yellow-400' : 'bg-red-400'}`}></div>
+                <div className={`w-1.5 h-7 rounded-full opacity-70 ${isRestarting ? 'bg-yellow-400' : 'bg-red-400'}`}></div>
+                <div className={`w-1.5 h-5 rounded-full opacity-60 ${isRestarting ? 'bg-yellow-400' : 'bg-red-400'}`}></div>
               </div>
             )}
           </div>
