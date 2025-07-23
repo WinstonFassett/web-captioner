@@ -1,7 +1,7 @@
 import React from 'react';
 import { Mic, Download, Trash2, Clipboard, Settings } from 'lucide-react';
 import { useCaptionStore } from '../stores/captionStore';
-import { exportTranscript, generateFullTranscript, copyToClipboard } from '../utils/textUtils';
+import { exportTranscript, generateFullTranscript, copyToClipboard, generateTranscriptText } from '../utils/textUtils';
 
 interface AppHeaderProps {
   onSettingsClick: () => void;
