@@ -25,7 +25,7 @@ export const useSettingsStore = create<SettingsState>()(
       setLanguage: (language: string) => set({ language }),
       setFontSize: (size: 'small' | 'medium' | 'large') => set({ fontSize: size }),
       setAutoScroll: (autoScroll: boolean) => set({ autoScroll }),
-      setShowTimestamps: (show: boolean) => set({ showTimestamps })
+      setShowTimestamps: (show: boolean) => set({ showTimestamps: show })
     }),
     {
       name: 'settings-store'
