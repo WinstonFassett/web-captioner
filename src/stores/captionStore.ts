@@ -144,7 +144,16 @@ export const useCaptionStore = create<CaptionState>()(
       name: 'caption-store',
       partialize: (state) => ({
         captions: state.captions
-      })
+      }),
+      onRehydrateStorage: () => (state) => {
+        if (state?.captions) {
+          // Convert timestamp strings back to Date objects
+          state.captions = state.captions.map(caption => ({
+            ...caption,
+            timestamp: new Date(caption.timestamp)
+          }));
+        }
+      }
     }
   )
 );

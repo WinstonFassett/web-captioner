@@ -15,7 +15,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onSettingsClick }) => {
   };
 
   const handleCopyFullTranscript = async () => {
-    const fullText = generateFullTranscript(captions);
+    const fullText = generateTranscriptText(captions);
     const success = await copyToClipboard(fullText);
     if (success) {
       setCopyFeedback('Full transcript copied!');
