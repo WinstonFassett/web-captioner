@@ -1,0 +1,79 @@
+import React, { useRef, useEffect } from 'react';
+import { Mic, AlertCircle } from 'lucide-react';
+import { useCaptionStore } from '../stores/captionStore';
+import { useRecordingStore } from '../stores/recordingStore';
+import { useSettingsStore } from '../stores/settingsStore';
+import { CaptionItem } from './CaptionItem';
+
+export const CaptionDisplay: React.FC = () => {
+  const captionEndRef = useRef<HTMLDivElement>(null);
+  
+  const { captions, currentCaption } = useCaptionStore();
+  const { error, hasUserInitiatedRecording } = useRecordingStore();
+  const { fontSize, autoScroll } = useSettingsStore();
+
+  useEffect(() => {
+    if (autoScroll && captionEndRef.current) {
+      captionEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [captions, currentCaption, autoScroll]);
+
+  const getFontSizeClass = () => {
+    switch (fontSize) {
+      case 'small': return 'text-xl md:text-2xl lg:text-3xl';
+      case 'medium': return 'text-2xl md:text-3xl lg:text-4xl';
+      case 'large': return 'text-3xl md:text-4xl lg:text-5xl';
+      default: return 'text-3xl md:text-4xl lg:text-5xl';
+    }
+  };
+
+  return (
+    <div className="flex-1 bg-white/5 backdrop-blur-lg rounded-2xl p-6 mb-4 overflow-y-auto overflow-x-hidden">
+      {error && (
+        <div className="mb-6 p-4 bg-red-500/20 border border-red-500/30 rounded-xl text-red-300 flex items-center space-x-2">
+          <AlertCircle className="w-5 h-5" />
+          <span>{error}</span>
+        </div>
+      )}
+      
+      {captions.length === 0 && !currentCaption && (
+        <div className="text-center py-12 text-white/40">
+          <Mic className="w-20 h-20 mx-auto mb-6" />
+          <p className="text-2xl font-light">
+            {!hasUserInitiatedRecording 
+              ? 'Press record to start captioning' 
+              : 'Start speaking to see live captions'
+            }
+          </p>
+        </div>
+      )}
+      
+      <div className="space-y-8">
+        {captions.map((caption, index) => (
+          <CaptionItem
+            key={caption.id}
+            caption={caption}
+            index={index}
+            totalCaptions={captions.length}
+          />
+        ))}
+        
+        {currentCaption && (
+          <div className="p-4">
+            <div className="flex flex-col space-y-2">
+              <span className="text-sm text-white/40 font-mono">
+                {new Date().toLocaleTimeString()}
+              </span>
+              <p className={`text-white/90 ${getFontSizeClass()} font-light leading-relaxed tracking-wide`}>
+                {currentCaption}
+                <span className="inline-block w-1 h-12 md:h-14 lg:h-16 bg-blue-400 ml-2 opacity-75"></span>
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+      
+      <div ref={captionEndRef} />
+    </div>
+  );
+};
