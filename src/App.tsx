@@ -13,20 +13,19 @@ function App() {
   const { isSupported, hasUserInitiatedRecording } = useRecordingStore();
   
   // Initialize speech recognition
-  useSpeechRecognition();
+  const { startListening } = useSpeechRecognition();
 
   // Auto-start recording if user had it enabled previously
   useEffect(() => {
     if (isSupported && hasUserInitiatedRecording) {
       // Small delay to ensure everything is initialized
       const timer = setTimeout(() => {
-        const { startListening } = useSpeechRecognition();
         startListening();
       }, 1000);
       
       return () => clearTimeout(timer);
     }
-  }, [isSupported, hasUserInitiatedRecording]);
+  }, [isSupported, hasUserInitiatedRecording, startListening]);
 
   if (!isSupported) {
     return <UnsupportedBrowser />;
