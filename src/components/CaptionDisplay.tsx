@@ -44,32 +44,29 @@ export const CaptionDisplay: React.FC = () => {
           </p>
         </div>
       )}
-      
-      <div className="space-y-8">
+
+      <div className={getFontSizeClass()}>
         {captions.map((caption, index) => (
-          <CaptionItem
+          <CaptionItem 
             key={caption.id}
             caption={caption}
             index={index}
             totalCaptions={captions.length}
           />
         ))}
-        
         {currentCaption && (
-          <div className="p-4">
-            <div className="flex flex-col space-y-2">
-              <span className="text-sm text-white/40 font-mono">
-                {new Date().toLocaleTimeString()}
-              </span>
-              <p className={`text-white/90 ${getFontSizeClass()} font-light leading-relaxed tracking-wide`}>
-                {currentCaption}
-                <span className="inline-block w-1 h-12 md:h-14 lg:h-16 bg-blue-400 ml-2 opacity-75"></span>
-              </p>
-            </div>
-          </div>
+          <CaptionItem 
+            caption={{ 
+              id: 'current', 
+              text: currentCaption, 
+              timestamp: new Date(),
+              isFinal: false
+            }}
+            index={captions.length}
+            totalCaptions={captions.length + 1}
+          />
         )}
       </div>
-      
     </ScrollToBottom>
   );
 };
