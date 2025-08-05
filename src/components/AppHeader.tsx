@@ -1,6 +1,7 @@
 import React from 'react';
 import { Mic, Download, Trash2, Clipboard, Settings } from 'lucide-react';
 import { useCaptionStore } from '../stores/captionStore';
+import { useSettingsStore } from '../stores/settingsStore';
 import { exportTranscript, generateFullTranscript, copyToClipboard, generateTranscriptText } from '../utils/textUtils';
 
 interface AppHeaderProps {
@@ -9,13 +10,14 @@ interface AppHeaderProps {
 
 export const AppHeader: React.FC<AppHeaderProps> = ({ onSettingsClick }) => {
   const { captions, setCopyFeedback, clearCaptions } = useCaptionStore();
+  const { showTimestamps } = useSettingsStore();
 
   const handleExport = () => {
-    exportTranscript(captions);
+    exportTranscript(captions, showTimestamps);
   };
 
   const handleCopyFullTranscript = async () => {
-    const fullText = generateTranscriptText(captions);
+    const fullText = generateTranscriptText(captions, showTimestamps);
     const success = await copyToClipboard(fullText);
     if (success) {
       setCopyFeedback('Full transcript copied!');
