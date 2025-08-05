@@ -1,22 +1,15 @@
-import React, { useRef, useEffect } from 'react';
+import React from 'react';
 import { Mic, AlertCircle } from 'lucide-react';
+import ScrollToBottom from 'react-scroll-to-bottom';
 import { useCaptionStore } from '../stores/captionStore';
 import { useRecordingStore } from '../stores/recordingStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { CaptionItem } from './CaptionItem';
 
 export const CaptionDisplay: React.FC = () => {
-  const captionEndRef = useRef<HTMLDivElement>(null);
-  
   const { captions, currentCaption } = useCaptionStore();
   const { error, hasUserInitiatedRecording } = useRecordingStore();
   const { fontSize, autoScroll } = useSettingsStore();
-
-  useEffect(() => {
-    if (autoScroll && captionEndRef.current) {
-      captionEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [captions, currentCaption, autoScroll]);
 
   const getFontSizeClass = () => {
     switch (fontSize) {
@@ -28,7 +21,11 @@ export const CaptionDisplay: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 bg-white/5 backdrop-blur-lg rounded-2xl p-6 mb-4 overflow-y-auto overflow-x-hidden">
+    <ScrollToBottom 
+      className="flex-1 bg-white/5 backdrop-blur-lg rounded-2xl p-6 mb-4 overflow-x-hidden" 
+      followButtonClassName="hidden"
+      scrollViewClassName="h-full"
+      mode={autoScroll ? "bottom" : "top"}>
       {error && (
         <div className="mb-6 p-4 bg-red-500/20 border border-red-500/30 rounded-xl text-red-300 flex items-center space-x-2">
           <AlertCircle className="w-5 h-5" />
@@ -73,7 +70,6 @@ export const CaptionDisplay: React.FC = () => {
         )}
       </div>
       
-      <div ref={captionEndRef} />
-    </div>
+    </ScrollToBottom>
   );
 };
