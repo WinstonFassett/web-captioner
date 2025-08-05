@@ -1,8 +1,8 @@
 import { Caption } from '../stores/captionStore';
 
-export const generateTranscriptText = (captions: Caption[]): string => {
+export const generateTranscriptText = (captions: Caption[], showTimestamps: boolean = true): string => {
   return captions.map(caption => 
-    `[${caption.timestamp.toLocaleTimeString()}] ${caption.text}`
+    showTimestamps ? `[${caption.timestamp.toLocaleTimeString()}] ${caption.text}` : caption.text
   ).join('\n');
 };
 
@@ -10,8 +10,8 @@ export const generateFullTranscript = (captions: Caption[]): string => {
   return captions.map(caption => caption.text).join(' ');
 };
 
-export const exportTranscript = (captions: Caption[], filename?: string) => {
-  const text = generateTranscriptText(captions);
+export const exportTranscript = (captions: Caption[], showTimestamps: boolean = true, filename?: string) => {
+  const text = generateTranscriptText(captions, showTimestamps);
   const blob = new Blob([text], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
