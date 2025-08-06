@@ -68,11 +68,13 @@ export const CaptionItem: React.FC<CaptionItemProps> = ({ caption, index, totalC
       style={{ animationDelay: `${index * 0.05}s` }}
     >
       <div className="flex items-start justify-between mb-2">
-        {showTimestamps && (
-          <span className="text-sm text-white/40 font-mono">
-            {caption.timestamp.toLocaleTimeString()}
-          </span>
-        )}
+        <div className="flex-1">
+          {showTimestamps && (
+            <span className="text-sm text-white/40 font-mono">
+              {caption.timestamp.toLocaleTimeString()}
+            </span>
+          )}
+        </div>
         
         {/* Action buttons */}
         <div className="flex items-center space-x-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
