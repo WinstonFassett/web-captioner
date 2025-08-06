@@ -75,39 +75,39 @@ export const CaptionItem: React.FC<CaptionItemProps> = ({ caption, index, totalC
         )}
         
         {/* Action buttons */}
-        <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <div className="flex items-center space-x-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <button
             onClick={handleCopy}
-            className="p-1.5 rounded-lg bg-white/10 text-white/60 hover:text-white hover:bg-white/20 transition-all duration-200"
+            className="p-2 rounded-lg bg-white/10 text-white/60 hover:text-white hover:bg-white/20 transition-all duration-200"
             title="Copy text"
           >
-            <Copy className="w-3.5 h-3.5" />
+            <Copy className="w-4 h-4" />
           </button>
           
           <button
             onClick={() => startEditing(caption)}
-            className="p-1.5 rounded-lg bg-white/10 text-white/60 hover:text-white hover:bg-white/20 transition-all duration-200"
+            className="p-2 rounded-lg bg-white/10 text-white/60 hover:text-white hover:bg-white/20 transition-all duration-200"
             title="Edit text"
           >
-            <Edit3 className="w-3.5 h-3.5" />
+            <Edit3 className="w-4 h-4" />
           </button>
           
           {index < totalCaptions - 1 && (
             <button
               onClick={() => squashWithNext(index)}
-              className="p-1.5 rounded-lg bg-blue-500/20 text-blue-400 hover:text-blue-300 hover:bg-blue-500/30 transition-all duration-200"
+              className="p-2 rounded-lg bg-blue-500/20 text-blue-400 hover:text-blue-300 hover:bg-blue-500/30 transition-all duration-200"
               title="Merge with next"
             >
-              <ArrowDown className="w-3.5 h-3.5" />
+              <ArrowDown className="w-4 h-4" />
             </button>
           )}
           
           <button
             onClick={() => deleteCaption(caption.id)}
-            className="p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:text-red-300 hover:bg-red-500/30 transition-all duration-200"
+            className="p-2 rounded-lg bg-red-500/20 text-red-400 hover:text-red-300 hover:bg-red-500/30 transition-all duration-200"
             title="Delete"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <Trash2 className="w-4 h-4" />
           </button>
         </div>
       </div>
